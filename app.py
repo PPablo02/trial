@@ -264,10 +264,14 @@ def graficar_rendimientos_acumulados(df, titulo="Rendimientos Acumulados"):
 
 # --- Función para optimizar el portafolio según el modelo de Markowitz ---
 def optimizar_portafolio_markowitz(tickers, datos, metodo="min_vol", objetivo=None, risk_free_rate=0.02, target_return=0):
+    # Verificar si 'Retornos' existe en el diccionario de datos
+    if any('Retornos' not in df for df in datos.values()):
+        st.error("Los datos no contienen la clave 'Retornos'. Por favor, verifica los datos.")
+        return None
 
     # Extraer los retornos de los ETFs desde los datos descargados
     retornos = pd.DataFrame({ticker: datos[ticker]['Retornos'] for ticker in tickers})
-    
+
     # Calcular la media y la covarianza de los retornos
     media = retornos.mean()
     cov = retornos.cov()
@@ -278,7 +282,6 @@ def optimizar_portafolio_markowitz(tickers, datos, metodo="min_vol", objetivo=No
 
     # Función para calcular el Sharpe ratio del portafolio
     def sharpe(w):
-        # Calcular el retorno ponderado y la desviación estándar ponderada
         retorno = np.dot(w, media)
         riesgo_total = np.sqrt(np.dot(w.T, np.dot(cov, w)))
         return -retorno / riesgo_total  # Maximizar el Sharpe ratio
@@ -302,13 +305,14 @@ def optimizar_portafolio_markowitz(tickers, datos, metodo="min_vol", objetivo=No
         objetivo_funcion = riesgo
     
     # Definir los límites de los pesos 
-    limites = [(-1, 1) for _ in range(n)]
-
+    limites = [(0, 1) for _ in range(n)]  # No puede haber pesos negativos
+    
     # Optimización
     resultado = minimize(objetivo_funcion, w_inicial, constraints=restricciones, bounds=limites)
     
     # Devolver los pesos optimizados
     return np.array(resultado.x).flatten()
+
 
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
@@ -414,12 +418,7 @@ with tabs[2]:
 # --- Portafolios Óptimos ---
 with tabs[3]:
     st.header("Portafolios Óptimos con la teoría de Markowitz")
-
-    for ticker, df in datos.items():
-        st.subheader(f"Datos para {ticker}")
-        st.write("Primeras filas del DataFrame:")
-        st.write(df.head())
-        
+    
     # Descargar datos históricos para el periodo 2010-2020
     datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
     retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
@@ -428,74 +427,77 @@ with tabs[3]:
     pesos_min_vol = optimizar_portafolio_markowitz(tickers, retornos_2010_2020, metodo="min_vol")
     st.subheader("Portafolio de Mínima Volatilidad")
     
-    # Mostrar los pesos del Portafolio de Mínima Volatilidad
-    st.write("Pesos del Portafolio de Mínima Volatilidad:")
-    for ticker, peso in zip(tickers, pesos_min_vol):
-        st.write(f"{ticker}: {peso:.4%}")
-    
-    # Crear el gráfico de barras para el Portafolio de Mínima Volatilidad
-    fig_min_vol = go.Figure(go.Bar(
-        x=list(tickers),
-        y=pesos_min_vol,
-        name='Mínima Volatilidad',
-        marker_color='blue'
-    ))
-    fig_min_vol.update_layout(
-        title="Pesos - Portafolio de Mínima Volatilidad",
-        xaxis_title='ETF',
-        yaxis_title='Peso',
-        template='plotly_dark'
-    )
-    st.plotly_chart(fig_min_vol)
+    if pesos_min_vol is not None:
+        # Mostrar los pesos del Portafolio de Mínima Volatilidad
+        st.write("Pesos del Portafolio de Mínima Volatilidad:")
+        for ticker, peso in zip(tickers, pesos_min_vol):
+            st.write(f"{ticker}: {peso:.4%}")
+        
+        # Crear el gráfico de barras para el Portafolio de Mínima Volatilidad
+        fig_min_vol = go.Figure(go.Bar(
+            x=list(tickers),
+            y=pesos_min_vol,
+            name='Mínima Volatilidad',
+            marker_color='blue'
+        ))
+        fig_min_vol.update_layout(
+            title="Pesos - Portafolio de Mínima Volatilidad",
+            xaxis_title='ETF',
+            yaxis_title='Peso',
+            template='plotly_dark'
+        )
+        st.plotly_chart(fig_min_vol)
 
     # 2. Portafolio de Máximo Sharpe Ratio
     pesos_sharpe = optimizar_portafolio_markowitz(tickers, retornos_2010_2020, metodo="sharpe")
     st.subheader("Portafolio de Máximo Sharpe Ratio")
     
-    # Mostrar los pesos del Portafolio de Máximo Sharpe Ratio
-    st.write("Pesos del Portafolio de Máximo Sharpe Ratio:")
-    for ticker, peso in zip(tickers, pesos_sharpe):
-        st.write(f"{ticker}: {peso:.4%}")
-    
-    # Crear el gráfico de barras para el Portafolio de Máximo Sharpe Ratio
-    fig_sharpe = go.Figure(go.Bar(
-        x=list(tickers),
-        y=pesos_sharpe,
-        name='Máximo Sharpe Ratio',
-        marker_color='green'
-    ))
-    fig_sharpe.update_layout(
-        title="Pesos - Portafolio de Máximo Sharpe Ratio",
-        xaxis_title='ETF',
-        yaxis_title='Peso',
-        template='plotly_dark'
-    )
-    st.plotly_chart(fig_sharpe)
+    if pesos_sharpe is not None:
+        # Mostrar los pesos del Portafolio de Máximo Sharpe Ratio
+        st.write("Pesos del Portafolio de Máximo Sharpe Ratio:")
+        for ticker, peso in zip(tickers, pesos_sharpe):
+            st.write(f"{ticker}: {peso:.4%}")
+        
+        # Crear el gráfico de barras para el Portafolio de Máximo Sharpe Ratio
+        fig_sharpe = go.Figure(go.Bar(
+            x=list(tickers),
+            y=pesos_sharpe,
+            name='Máximo Sharpe Ratio',
+            marker_color='green'
+        ))
+        fig_sharpe.update_layout(
+            title="Pesos - Portafolio de Máximo Sharpe Ratio",
+            xaxis_title='ETF',
+            yaxis_title='Peso',
+            template='plotly_dark'
+        )
+        st.plotly_chart(fig_sharpe)
     
     # 3. Portafolio de Mínima Volatilidad con Objetivo de Rendimiento de 10% Anual
     rendimiento_objetivo = 0.10 / 252  # 10% anual dividido por 252 días de negociación
     pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers, retornos_2010_2020, metodo="target", objetivo=rendimiento_objetivo)
     st.subheader("Portafolio de Mínima Volatilidad con Objetivo de 10% Anual")
     
-    # Mostrar los pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual
-    st.write("Pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual:")
-    for ticker, peso in zip(tickers, pesos_min_vol_objetivo):
-        st.write(f"{ticker}: {peso:.4%}")
-    
-    # Crear el gráfico de barras para el Portafolio de Mínima Volatilidad con Objetivo de 10% Anual
-    fig_min_vol_objetivo = go.Figure(go.Bar(
-        x=list(tickers),
-        y=pesos_min_vol_objetivo,
-        name='Mínima Volatilidad con Objetivo de 10%',
-        marker_color='orange'
-    ))
-    fig_min_vol_objetivo.update_layout(
-        title="Pesos - Portafolio de Mínima Volatilidad con Objetivo de 10% Anual",
-        xaxis_title='ETF',
-        yaxis_title='Peso',
-        template='plotly_dark'
-    )
-    st.plotly_chart(fig_min_vol_objetivo)
+    if pesos_min_vol_objetivo is not None:
+        # Mostrar los pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual
+        st.write("Pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual:")
+        for ticker, peso in zip(tickers, pesos_min_vol_objetivo):
+            st.write(f"{ticker}: {peso:.4%}")
+        
+        # Crear el gráfico de barras para el Portafolio de Mínima Volatilidad con Objetivo de 10% Anual
+        fig_min_vol_objetivo = go.Figure(go.Bar(
+            x=list(tickers),
+            y=pesos_min_vol_objetivo,
+            name='Mínima Volatilidad con Objetivo de 10%',
+            marker_color='orange'
+        ))
+        fig_min_vol_objetivo.update_layout(
+            title="Pesos - Portafolio de Mínima Volatilidad con Objetivo de 10% Anual",
+            xaxis_title='ETF',
+            yaxis_title='Peso',
+            template='plotly_dark'
+        )
+        st.plotly_chart(fig_min_vol_objetivo)
 
 
 # --- Backtesting ---
