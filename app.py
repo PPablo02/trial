@@ -125,12 +125,11 @@ def cargar_tipo_cambio(inicio, fin, ticker="MXN=X"):
     :param ticker: Símbolo del tipo de cambio (por defecto es 'MXN=X').
     :return: Serie de pandas con el tipo de cambio ajustado a las fechas.
     """
-    try:
-        # Descargar los datos del tipo de cambio
-        datos_tipo_cambio = yf.download(ticker, start=inicio, end=fin)
-        # Usar la columna 'Close' como el valor del tipo de cambio
-        tipo_cambio = datos_tipo_cambio['Close']
-        return tipo_cambio
+    # Descargar los datos del tipo de cambio
+    datos_tipo_cambio = yf.download(ticker, start=inicio, end=fin)
+    # Usar la columna 'Close' como el valor del tipo de cambio
+    tipo_cambio = datos_tipo_cambio['Close']
+    return tipo_cambio
 
 def cargar_datos_pesos(tickers, inicio, fin):
     datos = {}
