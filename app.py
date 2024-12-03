@@ -437,20 +437,20 @@ with tabs[3]:
     pesos_min_vol = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="min_vol")
     print("Pesos del Portafolio de Mínima Volatilidad:")
     for ticker, peso in zip(tickers, pesos_min_vol):
-    print(f"{ticker}: {peso:.4%}")
+        st.write(f"{ticker}: {peso:.4%}")
 
     # 2. Portafolio de Máximo Sharpe Ratio
     pesos_sharpe = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="sharpe")
     print("\nPesos del Portafolio de Máximo Sharpe Ratio:")
     for ticker, peso in zip(tickers, pesos_sharpe):
-        print(f"{ticker}: {peso:.4%}")
+        st.write(f"{ticker}: {peso:.4%}")
     
     # 3. Portafolio de Mínima Volatilidad con Objetivo de Rendimiento de 10% Anual
     rendimiento_objetivo = 0.10 / 252  # 10% anual dividido por 252 días de negociación
     pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="target", objetivo=rendimiento_objetivo)
     print("\nPesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual:")
     for ticker, peso in zip(tickers, pesos_min_vol_objetivo):
-        print(f"{ticker}: {peso:.4%}")
+        st.write(f"{ticker}: {peso:.4%}")
     
 
 # --- Backtesting ---
