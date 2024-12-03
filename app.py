@@ -106,22 +106,17 @@ tickers = {
 # Función para cargar datos de múltiples tickers
 def cargar_datos(tickers, inicio, fin):
     """
-    Carga datos históricos de ETFs y agrega columnas de precio y retornos ajustados a pesos mexicanos.
-    
-    :param tickers: Lista de tickers a descargar.
-    :param inicio: Fecha de inicio en formato 'YYYY-MM-DD'.
-    :param fin: Fecha de fin en formato 'YYYY-MM-DD'.
-    :param tipo_cambio: Serie de tipo de cambio USD/MXN diario.
-    :return: Diccionario con datos por ticker.
+    Descarga datos históricos y calcula retornos diarios.
     """
     datos = {}
     for ticker in tickers:
         try:
-            # Descargar datos del ETF
+            # Descargar datos
             df = yf.download(ticker, start=inicio, end=fin)
-            df["Precio"] = df['Close']  # Precio en USD
-            df['Retornos'] = df['Close'].pct_change()  # Retornos en USD
-            datos[ticker] = df.dropna()  # Eliminar valores nulos
+            # Procesar precios ajustados y calcular retornos
+            df["Precio"] = df["Adj Close"]
+            df["Retornos"] = df["Adj Close"].pct_change()
+            datos[ticker] = df.dropna()
         except Exception as e:
             print(f"Error descargando datos para {ticker}: {e}")
     return datos
