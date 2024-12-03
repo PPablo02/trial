@@ -411,7 +411,7 @@ with tabs[3]:
     
     # Descargar datos históricos para el periodo 2010-2020
     datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
-    retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
+    retornos_2010_2020 = pd.DataFrame({k: v for k, v in datos_2010_2020.items()}).dropna()
     
     # 1. Portafolio de Mínima Volatilidad
     pesos_min_vol = optimizar_portafolio_markowitz(tickers, retornos_2010_2020, metodo="min_vol")
