@@ -428,29 +428,59 @@ with tabs[2]:
 # --- Portafolios Óptimos ---
 with tabs[3]:
     st.header("Portafolios Óptimos con la teoría de Markowitz")
-
+    
     # Descargar datos históricos para el periodo 2010-2020
     datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
     retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
     
     # 1. Portafolio de Mínima Volatilidad
     pesos_min_vol = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="min_vol")
-    print("Pesos del Portafolio de Mínima Volatilidad:")
-    for ticker, peso in zip(tickers, pesos_min_vol):
-        st.write(f"{ticker}: {peso:.4%}")
-
+    
     # 2. Portafolio de Máximo Sharpe Ratio
     pesos_sharpe = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="sharpe")
-    print("\nPesos del Portafolio de Máximo Sharpe Ratio:")
-    for ticker, peso in zip(tickers, pesos_sharpe):
-        st.write(f"{ticker}: {peso:.4%}")
     
     # 3. Portafolio de Mínima Volatilidad con Objetivo de Rendimiento de 10% Anual
     rendimiento_objetivo = 0.10 / 252  # 10% anual dividido por 252 días de negociación
     pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="target", objetivo=rendimiento_objetivo)
-    print("\nPesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual:")
-    for ticker, peso in zip(tickers, pesos_min_vol_objetivo):
-        st.write(f"{ticker}: {peso:.4%}")
+    
+    # Crear los gráficos de barras para cada portafolio por separado
+    fig = go.Figure()
+
+    # Portafolio de Mínima Volatilidad
+    fig.add_trace(go.Bar(
+        x=list(tickers),
+        y=pesos_min_vol,
+        name='Mínima Volatilidad',
+        marker_color='blue'
+    ))
+    
+    # Portafolio de Máximo Sharpe Ratio
+    fig.add_trace(go.Bar(
+        x=list(tickers),
+        y=pesos_sharpe,
+        name='Máximo Sharpe Ratio',
+        marker_color='green'
+    ))
+
+    # Portafolio de Mínima Volatilidad con objetivo de 10% anual
+    fig.add_trace(go.Bar(
+        x=list(tickers),
+        y=pesos_min_vol_objetivo,
+        name='Mínima Volatilidad con Objetivo de 10%',
+        marker_color='orange'
+    ))
+
+    # Actualizar el diseño de la gráfica
+    fig.update_layout(
+        title="Pesos de los Portafolios Óptimos",
+        barmode='group',  # Agrupar las barras
+        xaxis_title='ETF',
+        yaxis_title='Peso',
+        template='plotly_dark'
+    )
+
+    # Mostrar el gráfico en Streamlit
+    st.plotly_chart(fig)
     
 
 # --- Backtesting ---
