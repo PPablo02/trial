@@ -455,7 +455,7 @@ with tabs[3]:
     # Descargar tipo de cambio USD/MXN
     tipo_cambio = cargar_tipo_cambio("2010-01-01", "2020-01-01")
     # Ajustar los retornos a pesos mexicanos
-    retornos_2010_2020_mxn = ajustar_retornos_a_pesos(retornos_2010_2020, tipo_cambio)
+    retornos_2010_2020_mxn = ajustar_retornos_a_pesos(retornos_2010_2020, tipo_cambio).dropna()
     
     # 1. Portafolio de Mínima Volatilidad
     pesos_min_vol = optimizar_portafolio_markowitz(tickers, retornos_2010_2020_mxn, metodo="min_vol")
