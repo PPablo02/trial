@@ -435,52 +435,76 @@ with tabs[3]:
     
     # 1. Portafolio de Mínima Volatilidad
     pesos_min_vol = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="min_vol")
+    st.subheader("Portafolio de Mínima Volatilidad")
     
-    # 2. Portafolio de Máximo Sharpe Ratio
-    pesos_sharpe = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="sharpe")
+    # Mostrar los pesos del Portafolio de Mínima Volatilidad
+    st.write("Pesos del Portafolio de Mínima Volatilidad:")
+    for ticker, peso in zip(tickers, pesos_min_vol):
+        st.write(f"{ticker}: {peso:.4%}")
     
-    # 3. Portafolio de Mínima Volatilidad con Objetivo de Rendimiento de 10% Anual
-    rendimiento_objetivo = 0.10 / 252  # 10% anual dividido por 252 días de negociación
-    pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="target", objetivo=rendimiento_objetivo)
-    
-    # Crear los gráficos de barras para cada portafolio por separado
-    fig = go.Figure()
-
-    # Portafolio de Mínima Volatilidad
-    fig.add_trace(go.Bar(
+    # Crear el gráfico de barras para el Portafolio de Mínima Volatilidad
+    fig_min_vol = go.Figure(go.Bar(
         x=list(tickers),
         y=pesos_min_vol,
         name='Mínima Volatilidad',
         marker_color='blue'
     ))
+    fig_min_vol.update_layout(
+        title="Pesos - Portafolio de Mínima Volatilidad",
+        xaxis_title='ETF',
+        yaxis_title='Peso',
+        template='plotly_dark'
+    )
+    st.plotly_chart(fig_min_vol)
+
+    # 2. Portafolio de Máximo Sharpe Ratio
+    pesos_sharpe = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="sharpe")
+    st.subheader("Portafolio de Máximo Sharpe Ratio")
     
-    # Portafolio de Máximo Sharpe Ratio
-    fig.add_trace(go.Bar(
+    # Mostrar los pesos del Portafolio de Máximo Sharpe Ratio
+    st.write("Pesos del Portafolio de Máximo Sharpe Ratio:")
+    for ticker, peso in zip(tickers, pesos_sharpe):
+        st.write(f"{ticker}: {peso:.4%}")
+    
+    # Crear el gráfico de barras para el Portafolio de Máximo Sharpe Ratio
+    fig_sharpe = go.Figure(go.Bar(
         x=list(tickers),
         y=pesos_sharpe,
         name='Máximo Sharpe Ratio',
         marker_color='green'
     ))
-
-    # Portafolio de Mínima Volatilidad con objetivo de 10% anual
-    fig.add_trace(go.Bar(
+    fig_sharpe.update_layout(
+        title="Pesos - Portafolio de Máximo Sharpe Ratio",
+        xaxis_title='ETF',
+        yaxis_title='Peso',
+        template='plotly_dark'
+    )
+    st.plotly_chart(fig_sharpe)
+    
+    # 3. Portafolio de Mínima Volatilidad con Objetivo de Rendimiento de 10% Anual
+    rendimiento_objetivo = 0.10 / 252  # 10% anual dividido por 252 días de negociación
+    pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers, datos_2010_2020, metodo="target", objetivo=rendimiento_objetivo)
+    st.subheader("Portafolio de Mínima Volatilidad con Objetivo de 10% Anual")
+    
+    # Mostrar los pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual
+    st.write("Pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual:")
+    for ticker, peso in zip(tickers, pesos_min_vol_objetivo):
+        st.write(f"{ticker}: {peso:.4%}")
+    
+    # Crear el gráfico de barras para el Portafolio de Mínima Volatilidad con Objetivo de 10% Anual
+    fig_min_vol_objetivo = go.Figure(go.Bar(
         x=list(tickers),
         y=pesos_min_vol_objetivo,
         name='Mínima Volatilidad con Objetivo de 10%',
         marker_color='orange'
     ))
-
-    # Actualizar el diseño de la gráfica
-    fig.update_layout(
-        title="Pesos de los Portafolios Óptimos",
-        barmode='group',  # Agrupar las barras
+    fig_min_vol_objetivo.update_layout(
+        title="Pesos - Portafolio de Mínima Volatilidad con Objetivo de 10% Anual",
         xaxis_title='ETF',
         yaxis_title='Peso',
         template='plotly_dark'
     )
-
-    # Mostrar el gráfico en Streamlit
-    st.plotly_chart(fig)
+    st.plotly_chart(fig_min_vol_objetivo)
     
 
 # --- Backtesting ---
