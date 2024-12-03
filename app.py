@@ -407,7 +407,6 @@ with tabs[2]:
 
 # --- Portafolios Óptimos ---
 with tabs[3]:
-    with tabs[3]:
     st.header("Portafolios Óptimos con la teoría de Markowitz")
     
     # Descargar datos históricos para el periodo 2010-2020
