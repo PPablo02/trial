@@ -264,6 +264,7 @@ def graficar_rendimientos_acumulados(df, titulo="Rendimientos Acumulados"):
 
 # --- Función para optimizar el portafolio según el modelo de Markowitz ---
 def optimizar_portafolio_markowitz(tickers, datos, metodo="min_vol", objetivo=None, risk_free_rate=0.02, target_return=0):
+
     # Extraer los retornos de los ETFs desde los datos descargados
     retornos = pd.DataFrame({ticker: datos[ticker]['Retornos'] for ticker in tickers})
     
@@ -413,7 +414,12 @@ with tabs[2]:
 # --- Portafolios Óptimos ---
 with tabs[3]:
     st.header("Portafolios Óptimos con la teoría de Markowitz")
-    
+
+    for ticker, df in datos.items():
+        st.subheader(f"Datos para {ticker}")
+        st.write("Primeras filas del DataFrame:")
+        st.write(df.head())
+        
     # Descargar datos históricos para el periodo 2010-2020
     datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
     retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
