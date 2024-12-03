@@ -116,6 +116,33 @@ def cargar_datos(tickers, inicio, fin):
             print(f"Error descargando datos para {ticker}: {e}")
     return datos
 
+def cargar_tipo_cambio(inicio, fin, ticker="MXN=X"):
+    """
+    Carga los datos históricos del tipo de cambio USD/MXN desde Yahoo Finance.
+    
+    :param inicio: Fecha de inicio en formato "YYYY-MM-DD".
+    :param fin: Fecha de fin en formato "YYYY-MM-DD".
+    :param ticker: Símbolo del tipo de cambio (por defecto es 'MXN=X').
+    :return: Serie de pandas con el tipo de cambio ajustado a las fechas.
+    """
+    try:
+        # Descargar los datos del tipo de cambio
+        datos_tipo_cambio = yf.download(ticker, start=inicio, end=fin)
+        # Usar la columna 'Close' como el valor del tipo de cambio
+        tipo_cambio = datos_tipo_cambio['Close']
+        return tipo_cambio
+
+def cargar_datos_pesos(tickers, inicio, fin):
+    datos = {}
+    for ticker in tickers:
+        try:
+            df = yf.download(ticker, start=inicio, end=fin)
+            df["Precio"] = df['Close']
+            df['Retornos'] = df['Close'].pct_change()
+            datos[ticker] = df.dropna()
+        except Exception as e:
+            print(f"Error descargando datos para {ticker}: {e}")
+    return datos_peso
 
 # Función para calcular beta
 
@@ -306,43 +333,6 @@ def optimizar_portafolio_markowitz(tickers, datos, metodo="min_vol", objetivo=No
     # Devolver los pesos optimizados
     return np.array(resultado.x).flatten()
 
-def cargar_tipo_cambio(inicio, fin, ticker="MXN=X"):
-    """
-    Carga los datos históricos del tipo de cambio USD/MXN desde Yahoo Finance.
-    
-    :param inicio: Fecha de inicio en formato "YYYY-MM-DD".
-    :param fin: Fecha de fin en formato "YYYY-MM-DD".
-    :param ticker: Símbolo del tipo de cambio (por defecto es 'MXN=X').
-    :return: Serie de pandas con el tipo de cambio ajustado a las fechas.
-    """
-    try:
-        # Descargar los datos del tipo de cambio
-        datos_tipo_cambio = yf.download(ticker, start=inicio, end=fin)
-        # Usar la columna 'Close' como el valor del tipo de cambio
-        tipo_cambio = datos_tipo_cambio['Close']
-        return tipo_cambio
-    except Exception as e:
-        print(f"Error al cargar el tipo de cambio: {e}")
-        return None
-
-
-def ajustar_retornos_a_pesos(retornos, tipo_cambio):
-    """
-    Ajusta los retornos de los ETFs de dólares a pesos mexicanos.
-    
-    :param retornos: DataFrame de retornos diarios de los ETFs.
-    :param tipo_cambio: Serie del tipo de cambio USD/MXN diario.
-    :return: DataFrame con retornos ajustados a pesos mexicanos.
-    """
-    # Asegurarse de que las fechas coincidan entre los retornos y el tipo de cambio
-    retornos = retornos.loc[retornos.index.intersection(tipo_cambio.index)]
-    tipo_cambio = tipo_cambio.loc[tipo_cambio.index.intersection(retornos.index)]
-    
-    # Ajustar los retornos multiplicando por el cambio diario del tipo de cambio
-    retornos_mxn = retornos.multiply(tipo_cambio.pct_change().add(1), axis=0) - 1
-    return retornos_mxn
-
-
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
 
@@ -451,14 +441,9 @@ with tabs[3]:
     # Descargar datos históricos para el periodo 2010-2020
     datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
     retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
-
-    # Descargar tipo de cambio USD/MXN
-    tipo_cambio = cargar_tipo_cambio("2010-01-01", "2020-01-01")
-    # Ajustar los retornos a pesos mexicanos
-    retornos_2010_2020_mxn = ajustar_retornos_a_pesos(retornos_2010_2020, tipo_cambio).dropna()
     
     # 1. Portafolio de Mínima Volatilidad
-    pesos_min_vol = optimizar_portafolio_markowitz(tickers, retornos_2010_2020_mxn, metodo="min_vol")
+    pesos_min_vol = optimizar_portafolio_markowitz(tickers, retornos_2010_2020, metodo="min_vol")
     st.subheader("Portafolio de Mínima Volatilidad")
     
     st.write("Pesos del Portafolio de Mínima Volatilidad:")
@@ -480,7 +465,7 @@ with tabs[3]:
     st.plotly_chart(fig_min_vol)
 
     # 2. Portafolio de Máximo Sharpe Ratio
-    pesos_sharpe = optimizar_portafolio_markowitz(tickers, retornos_2010_2020_mxn, metodo="sharpe")
+    pesos_sharpe = optimizar_portafolio_markowitz(tickers, retornos_2010_2020, metodo="sharpe")
     st.subheader("Portafolio de Máximo Sharpe Ratio")
     
     st.write("Pesos del Portafolio de Máximo Sharpe Ratio:")
@@ -503,7 +488,7 @@ with tabs[3]:
     
     # 3. Portafolio de Mínima Volatilidad con Objetivo de Rendimiento de 10% Anual
     rendimiento_objetivo = 0.10 / 252  # 10% anual dividido por 252 días de negociación
-    pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers, retornos_2010_2020_mxn, metodo="target", objetivo=rendimiento_objetivo)
+    pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers, retornos_2010_2020, metodo="target", objetivo=rendimiento_objetivo)
     st.subheader("Portafolio de Mínima Volatilidad con Objetivo de 10% Anual")
     
     st.write("Pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual:")
