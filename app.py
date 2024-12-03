@@ -116,35 +116,7 @@ def cargar_datos(tickers, inicio, fin):
             print(f"Error descargando datos para {ticker}: {e}")
     return datos
 
-def cargar_tipo_cambio(inicio, fin, ticker="MXN=X"):
-    """
-    Carga los datos históricos del tipo de cambio USD/MXN desde Yahoo Finance.
-    
-    :param inicio: Fecha de inicio en formato "YYYY-MM-DD".
-    :param fin: Fecha de fin en formato "YYYY-MM-DD".
-    :param ticker: Símbolo del tipo de cambio (por defecto es 'MXN=X').
-    :return: Serie de pandas con el tipo de cambio ajustado a las fechas.
-    """
-    # Descargar los datos del tipo de cambio
-    datos_tipo_cambio = yf.download(ticker, start=inicio, end=fin)
-    # Usar la columna 'Close' como el valor del tipo de cambio
-    tipo_cambio = datos_tipo_cambio['Close']
-    return tipo_cambio
-
-def cargar_datos_pesos(tickers, inicio, fin):
-    datos = {}
-    for ticker in tickers:
-        try:
-            df = yf.download(ticker, start=inicio, end=fin)
-            df["Precio"] = df['Close']
-            df['Retornos'] = df['Close'].pct_change()
-            datos[ticker] = df.dropna()
-        except Exception as e:
-            print(f"Error descargando datos para {ticker}: {e}")
-    return datos_peso
-
 # Función para calcular beta
-
 def calcular_beta(portfolio_returns, index_returns):
     cov_matrix = np.cov(portfolio_returns, index_returns)
     return cov_matrix[0, 1] / cov_matrix[1, 1]  # Covarianza / Varianza índice
