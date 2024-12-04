@@ -290,7 +290,7 @@ def optimizar_portafolio_markowitz(retornos, metodo="min_vol", objetivo=None):
         objetivo_funcion = riesgo
     elif metodo == "sharpe":
         objetivo_funcion = sharpe
-    else:
+    else: metodo == "target"
         objetivo_funcion = riesgo
     
     # Definir los límites de los pesos (entre 0 y 1)
@@ -414,7 +414,7 @@ with tabs[3]:
 
     # 1. Portafolio de Mínima Volatilidad
     st.subheader("Portafolio de Mínima Volatilidad")
-    pesos_min_vol = optimizar_portafolio_markowitz(retornos_2010_2020, metodo="min_vol")
+    pesos_min_vol = optimizar_portafolio_markowitz(retornos_2010_2020, metodo="target")
     st.write("Pesos del Portafolio de Mínima Volatilidad:")
     for ticker, peso in zip(tickers.keys(), pesos_min_vol):
         st.write(f"{ticker}: {peso:.2%}")
