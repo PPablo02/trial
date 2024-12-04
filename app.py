@@ -364,7 +364,7 @@ def frontera_eficiente(retornos, num_portafolios=10000):
         pesos.append(w)
     
     # Convertir a arrays para facilitar el uso
-    rendimientos = np.array(rendimientos)
+    rendimientos = np.array(rendimientos)*100
     volatilidades = np.array(volatilidades)
     return rendimientos, volatilidades, pesos
 
