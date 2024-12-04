@@ -441,11 +441,12 @@ with tabs[3]:
     pesos_sharpe = optimizar_portafolio_markowitz(retornos, metodo="sharpe")
     pesos_target = optimizar_portafolio_markowitz(retornos, metodo="target", objetivo=0.00039)  # 10% anual ≈ 0.00039 diario
 
+    # Crear DataFrame para los pesos
     df_pesos = pd.DataFrame({
-    "Ticker": tickers,
-    "Mínima Volatilidad": pesos_min_vol,
-    "Máximo Sharpe Ratio": pesos_sharpe,
-    "Mínima Volatilidad (10% Rend.)": pesos_target
+        "Ticker": ticker,
+        "Mínima Volatilidad": pesos_min_vol,
+        "Máximo Sharpe Ratio": pesos_sharpe,
+        "Mínima Volatilidad (10% Rend.)": pesos_target
     })
 
     # Mostrar gráficos en Streamlit
