@@ -441,32 +441,35 @@ with tabs[3]:
     pesos_sharpe = optimizar_portafolio_markowitz(retornos, metodo="sharpe")
     pesos_target = optimizar_portafolio_markowitz(retornos, metodo="target", objetivo=0.00039)  # 10% anual ≈ 0.00039 diario
 
-    # Crear DataFrame para los pesos
-    df_pesos = pd.DataFrame({
-        "Ticker": ticker,
-        "Mínima Volatilidad": pesos_min_vol,
-        "Máximo Sharpe Ratio": pesos_sharpe,
-        "Mínima Volatilidad (10% Rend.)": pesos_target
-    })
+    # Lista de tickers
+    tickers_list = list(tickers.keys())
 
-    # Mostrar gráficos en Streamlit
+        # Mostrar los pesos por ticker
     st.title("Optimización de Portafolios - Markowitz")
-    
-    # Gráfica para Mínima Volatilidad
-    st.subheader("Portafolio de Mínima Volatilidad")
-    fig_min_vol = px.bar(df_pesos, x="Ticker", y="Mínima Volatilidad", title="Pesos - Portafolio de Mínima Volatilidad")
-    st.plotly_chart(fig_min_vol)
-    
-    # Gráfica para Máximo Sharpe Ratio
-    st.subheader("Portafolio de Máximo Sharpe Ratio")
-    fig_sharpe = px.bar(df_pesos, x="Ticker", y="Máximo Sharpe Ratio", title="Pesos - Portafolio de Máximo Sharpe Ratio")
-    st.plotly_chart(fig_sharpe)
-    
-    # Gráfica para Mínima Volatilidad con Rendimiento Objetivo
-    st.subheader("Portafolio de Mínima Volatilidad con 10% Rendimiento Anual")
-    fig_target = px.bar(df_pesos, x="Ticker", y="Mínima Volatilidad (10% Rend.)", title="Pesos - Mínima Volatilidad con 10% Rendimiento Anual")
-    st.plotly_chart(fig_target)
 
+        # Pesos para Mínima Volatilidad
+    st.subheader("Portafolio de Mínima Volatilidad")
+    for ticker, peso in zip(tickers_list, pesos_min_vol):
+        st.write(f"{ticker}: {peso:.2%}")
+    fig_min_vol = px.bar(x=tickers_list, y=pesos_min_vol, labels={'x': 'Ticker', 'y': 'Peso'}, 
+                         title="Pesos - Portafolio de Mínima Volatilidad")
+    st.plotly_chart(fig_min_vol)
+
+        # Pesos para Máximo Sharpe Ratio
+    st.subheader("Portafolio de Máximo Sharpe Ratio")
+    for ticker, peso in zip(tickers_list, pesos_sharpe):
+        st.write(f"{ticker}: {peso:.2%}")
+    fig_sharpe = px.bar(x=tickers_list, y=pesos_sharpe, labels={'x': 'Ticker', 'y': 'Peso'}, 
+                        title="Pesos - Portafolio de Máximo Sharpe Ratio")
+    st.plotly_chart(fig_sharpe)
+
+    # Pesos para Mínima Volatilidad con Rendimiento Objetivo
+    st.subheader("Portafolio de Mínima Volatilidad con 10% Rendimiento Anual")
+    for ticker, peso in zip(tickers_list, pesos_target):
+        st.write(f"{ticker}: {peso:.2%}")
+    fig_target = px.bar(x=tickers_list, y=pesos_target, labels={'x': 'Ticker', 'y': 'Peso'}, 
+                        title="Pesos - Mínima Volatilidad con 10% Rendimiento Anual")
+    st.plotly_chart(fig_target)
     
 # --- Backtesting ---
 with tabs[4]:
