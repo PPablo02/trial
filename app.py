@@ -430,15 +430,7 @@ with tabs[3]:
     fig_sharpe = px.bar(x=list(tickers.keys()), y=pesos_sharpe, title="Pesos - Máximo Sharpe Ratio")
     st.plotly_chart(fig_sharpe)
 
-    # 3. Portafolio de Mínima Volatilidad con Objetivo de Rendimiento de 10% Anual
-    rendimiento_objetivo = 0.10 / 252  # 10% anual dividido por 252 días de negociación
-    pesos_min_vol_objetivo = optimizar_portafolio_markowitz(tickers=list(tickers.keys()), datos=retornos_2010_2020, metodo="target", objetivo=rendimiento_objetivo)
-    st.subheader("Portafolio de Mínima Volatilidad con Objetivo de 10% Anual")    
-    st.write("Pesos del Portafolio de Mínima Volatilidad con Objetivo de 10% Anual:")
-    for ticker, peso in zip(tickers.keys(), pesos_min_vol_objetivo):
-        st.write(f"{ticker}: {peso:.2%}")
-    fig_min_vol_objetivo = px.bar(x=list(tickers.keys()), y=pesos_min_vol_objetivo, title="Pesos - Mínima Volatilidad con Objetivo de 10% Anual")
-    st.plotly_chart(fig_min_vol_objetivo)
+
     
 # --- Backtesting ---
 with tabs[4]:
