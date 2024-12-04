@@ -102,7 +102,6 @@ tickers = {
     }
 }
 
-
 # Función para cargar datos de múltiples tickers
 def cargar_datos(tickers, inicio, fin):
     """
@@ -114,8 +113,8 @@ def cargar_datos(tickers, inicio, fin):
             # Descargar datos
             df = yf.download(ticker, start=inicio, end=fin)
             # Procesar precios ajustados y calcular retornos
-            df["Precio"] = df["Adj Close"]
-            df["Retornos"] = df["Adj Close"].pct_change()
+            df["Precio"] = df["Close"]
+            df["Retornos"] = df["Close"].pct_change()
             datos[ticker] = df.dropna()
         except Exception as e:
             print(f"Error descargando datos para {ticker}: {e}")
@@ -301,6 +300,37 @@ def optimizar_portafolio_markowitz(retornos, metodo="min_vol", objetivo=None):
     
     # Devolver los pesos optimizados
     return np.array(resultado.x).flatten()
+
+def cargar_datos_con_tipo_cambio(tickers, inicio, fin):
+    datos = {}
+    
+    # Descargar el tipo de cambio histórico USDMXN
+    tipo_cambio = yf.download('USDMXN=X', start=inicio, end=fin)
+    tipo_cambio = tipo_cambio['Adj Close']  # Solo nos interesa el tipo de cambio ajustado
+
+    for ticker in tickers:
+        try:
+            # Descargar datos históricos del ticker
+            df = yf.download(ticker, start=inicio, end=fin)
+            
+            # Procesar precios ajustados y calcular retornos en USD
+            df["Precio USD"] = df["Close"]
+            df["Retornos USD"] = df["Close"].pct_change()
+
+            # Alinear los datos del ticker con el tipo de cambio (usando fechas comunes)
+            df = df.join(tipo_cambio, how='inner', rsuffix='_MXN')
+            
+            # Convertir el precio de USD a MXN
+            df["Precio MXN"] = df["Precio USD"] * df["Adj Close_MXN"]
+            df["Retornos MXN"] = df["Retornos USD"]  # Los retornos en porcentaje no cambian, solo los precios
+            
+            # Limpiar los datos
+            datos[ticker] = df.dropna()
+
+        except Exception as e:
+            print(f"Error descargando datos para {ticker}: {e}")
+    
+    return datos
 
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
