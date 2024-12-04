@@ -302,36 +302,6 @@ def optimizar_portafolio_markowitz(retornos, metodo="min_vol", objetivo=None):
     # Devolver los pesos optimizados
     return np.array(resultado.x).flatten()
 
-def cargar_datos_con_tipo_cambio(tickers, inicio, fin):
-    datos = {}
-    
-    # Descargar el tipo de cambio histórico USDMXN
-    tipo_cambio = yf.download('USDMXN=X', start=inicio, end=fin)
-    tipo_cambio = tipo_cambio['Adj Close']  # Solo nos interesa el tipo de cambio ajustado
-
-    for ticker in tickers:
-        try:
-            # Descargar datos históricos del ticker
-            df = yf.download(ticker, start=inicio, end=fin)
-            
-            # Procesar precios ajustados y calcular retornos en USD
-            df["Precio USD"] = df["Close"]
-            df["Retornos USD"] = df["Close"].pct_change()
-
-            # Alinear los datos del ticker con el tipo de cambio (usando fechas comunes)
-            df = df.join(tipo_cambio, how='inner', rsuffix='_MXN')
-            
-            # Convertir el precio de USD a MXN
-            df["Precio MXN"] = df["Precio USD"] * df["Adj Close_MXN"]
-            df["Retornos MXN"] = df["Retornos USD"]  # Los retornos en porcentaje no cambian, solo los precios
-            
-            # Limpiar los datos
-            datos[ticker] = df.dropna()
-
-        except Exception as e:
-            print(f"Error descargando datos para {ticker}: {e}")
-    
-    return datos
 
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
@@ -438,9 +408,9 @@ with tabs[2]:
 with tabs[3]:
     st.header("Portafolios Óptimos con la teoría de Markowitz")
     
-    # Descargar datos históricos para el periodo 2010-2020
+        # Descargar datos históricos para el periodo 2010-2020
     datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
-    retornos_2010_2020 = pd.DataFrame({k: v["Retornos MXN"] for k, v in datos_2010_2020.items()}).dropna()
+    retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
 
     # 1. Portafolio de Mínima Volatilidad
     st.subheader("Portafolio de Mínima Volatilidad")
@@ -459,7 +429,7 @@ with tabs[3]:
         st.write(f"{ticker}: {peso:.2%}")
     fig_sharpe = px.bar(x=list(tickers.keys()), y=pesos_sharpe, title="Pesos - Máximo Sharpe Ratio")
     st.plotly_chart(fig_sharpe)
-
+    
 # --- Backtesting ---
 with tabs[4]:
     st.header("Backtesting")
