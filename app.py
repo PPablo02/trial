@@ -337,7 +337,7 @@ def calcular_rendimiento_volatilidad(pesos, retornos):
         return rendimiento, volatilidad
 
 # Calcular el rendimiento y volatilidad para una serie de portafolios aleatorios
-def frontera_eficiente(retornos, num_portafolios=1000000):
+def frontera_eficiente(retornos, num_portafolios=100000):
     # Número de activos
     n = len(retornos.columns)
     
