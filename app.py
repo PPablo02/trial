@@ -184,18 +184,6 @@ def calcular_metricas(df, nivel_VaR=[0.95, 0.975, 0.99], risk_free_rate=0.02, ta
 
     return metrics
 
-# Función para cargar datos de múltiples tickers
-def cargar_datos(tickers, inicio, fin):
-    datos = {}
-    for ticker in tickers:
-        try:
-            df = yf.download(ticker, start=inicio, end=fin)
-            df["Precio"] = df['Close']
-            df['Retornos'] = df['Close'].pct_change()
-            datos[ticker] = df.dropna()  # Eliminamos filas con NaN
-        except Exception as e:
-            print(f"Error descargando datos para {ticker}: {e}")
-    return datos
 
 # Función para calcular drawdown
 def calcular_drawdown(precios):
@@ -262,46 +250,85 @@ def graficar_rendimientos_acumulados(df, titulo="Rendimientos Acumulados"):
     )
     return fig
 
-# --- Funciones de Optimización de Portafolios ---
-def optimizar_portafolio_markowitz(retornos, metodo="min_vol", objetivo=None):
-    # Función para optimizar el portafolio según el modelo de Markowitz
-    media = retornos.mean()
-    cov = retornos.cov()
-
+# --- Función de Optimización de Portafolios ---
+def optimizar_portafolio_markowitz(retornos, metodo, objetivo=None, rf=0.03):
+    """
+    Optimiza un portafolio según el modelo de Markowitz.
+    
+    :param retornos: DataFrame de retornos diarios de los activos.
+    :param metodo: Estrategia de optimización: "min_vol", "sharpe" o "target".
+    :param objetivo: Rendimiento objetivo para el portafolio (usado solo en "target").
+    :param rf: Tasa libre de riesgo anual para calcular el Sharpe ratio.
+    :return: Pesos óptimos de los activos en el portafolio.
+    """
+    # Calcular estadísticos básicos
+    media = retornos.mean()  # Media diaria de los retornos
+    cov = retornos.cov()     # Matriz de covarianza de los retornos
+    n = len(media)           # Número de activos
+    
     # Función para calcular el riesgo del portafolio (volatilidad)
     def riesgo(w):
         return np.sqrt(np.dot(w.T, np.dot(cov, w)))
 
     # Función para calcular el Sharpe ratio del portafolio
     def sharpe(w):
-        return -(np.dot(w.T, media) / np.sqrt(np.dot(w.T, np.dot(cov, w))))
+        rendimiento_portafolio = np.dot(w.T, media)
+        riesgo_portafolio = riesgo(w)
+        return -(rendimiento_portafolio - rf / 252) / riesgo_portafolio  # Negativo porque minimizamos
 
-    # Número de activos
-    n = len(media)
-    
-    # Pesos iniciales (distribución igual)
+    # Pesos iniciales (distribución equitativa)
     w_inicial = np.ones(n) / n
-    
+
     # Restricciones: los pesos deben sumar 1
     restricciones = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
     
+    # Elegir función objetivo según el método
     if metodo == "target" and objetivo is not None:
-        restricciones.append({"type": "eq", "fun": lambda w: np.dot(w, media) - objetivo})  # Rendimiento objetivo
+        # Agregar restricción para el rendimiento objetivo
+        restricciones.append({"type": "eq", "fun": lambda w: np.dot(w, media) - objetivo})
         objetivo_funcion = riesgo
     elif metodo == "sharpe":
         objetivo_funcion = sharpe
     else:
         objetivo_funcion = riesgo
     
-    # Definir los límites de los pesos (entre 0 y 1)
+    # Límites de los pesos (entre 0 y 1, o ajustables si se desea apalancamiento)
     limites = [(-1, 1) for _ in range(n)]
     
     # Optimización
     resultado = minimize(objetivo_funcion, w_inicial, constraints=restricciones, bounds=limites)
     
-    # Devolver los pesos optimizados
-    return np.array(resultado.x).flatten()
+    # Verificar si la optimización fue exitosa
+    if not resultado.success:
+        raise ValueError(f"Optimización fallida: {resultado.message}")
+    
+    # Devolver los pesos óptimos
+    return np.array(resultado.x)
 
+
+def cargar_datos_y_retornos(tickers, inicio, fin):
+    """
+    Descarga datos históricos, calcula retornos diarios y devuelve un DataFrame consolidado.
+    
+    :param tickers: Lista de tickers.
+    :param inicio: Fecha de inicio (formato "YYYY-MM-DD").
+    :param fin: Fecha de fin (formato "YYYY-MM-DD").
+    :return: DataFrame con retornos diarios por ticker.
+    """
+    datos = {}
+    for ticker in tickers:
+        try:
+            # Descargar datos
+            df = yf.download(ticker, start=inicio, end=fin)
+            # Procesar precios ajustados y calcular retornos
+            df["Retornos"] = df["Close"].pct_change()
+            datos[ticker] = df["Retornos"]
+        except Exception as e:
+            print(f"Error descargando datos para {ticker}: {e}")
+    
+    # Combinar todos los retornos en un DataFrame
+    df_retornos = pd.DataFrame(datos).dropna()
+    return df_retornos
 
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
@@ -407,28 +434,12 @@ with tabs[2]:
 # --- Portafolios Óptimos ---
 with tabs[3]:
     st.header("Portafolios Óptimos con la teoría de Markowitz")
-        
-    # Descargar datos históricos para el periodo 2010-2020
-    datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
-    retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
 
-    # 1. Portafolio de Mínima Volatilidad
-    st.subheader("Portafolio de Mínima Volatilidad")
-    pesos_min_vol = optimizar_portafolio_markowitz(tickers=list(tickers.keys()), datos=retornos_2010_2020, metodo="min_vol")
-    st.write("Pesos del Portafolio de Mínima Volatilidad:")
-    for ticker, peso in zip(tickers.keys(), pesos_min_vol):
-        st.write(f"{ticker}: {peso:.2%}")
-    fig_min_vol = px.bar(x=list(tickers.keys()), y=pesos_min_vol, title="Pesos - Mínima Volatilidad")
-    st.plotly_chart(fig_min_vol)
-
-    # 2. Portafolio de Máximo Sharpe Ratio
-    st.subheader("Portafolio de Máximo Sharpe Ratio")
-    pesos_sharpe = optimizar_portafolio_markowitz(tickers=list(tickers.keys()), datos=retornos_2010_2020, metodo="sharpe")
-    st.write("Pesos del Portafolio de Máximo Sharpe Ratio:")
-    for ticker, peso in zip(tickers.keys(), pesos_sharpe):
-        st.write(f"{ticker}: {peso:.2%}")
-    fig_sharpe = px.bar(x=list(tickers.keys()), y=pesos_sharpe, title="Pesos - Máximo Sharpe Ratio")
-    st.plotly_chart(fig_sharpe)
+    # Cargar los retornos de la ventana de tiempo e implementar la optimizacion
+    retornos = cargar_datos_y_retornos(tickers, "2010-01-01", "2020-01-01")
+    pesos_min_vol = optimizar_portafolio_markowitz(retornos, metodo="min_vol")
+    pesos_sharpe = optimizar_portafolio_markowitz(retornos, metodo="sharpe")
+    pesos_target = optimizar_portafolio_markowitz(retornos, metodo="target", objetivo=0.00039)  # 10% anual ≈ 0.00039 diario
 
 
     
