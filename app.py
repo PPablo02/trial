@@ -438,8 +438,8 @@ with tabs[3]:
     st.header("Portafolios Óptimos con la teoría de Markowitz")
     
     # Descargar datos históricos para el periodo 2010-2020
-    datos_2010_2020 = cargar_datos(list(tickers.keys()), "2010-01-01", "2020-01-01")
-    retornos_2010_2020 = pd.DataFrame({k: v["Retornos"] for k, v in datos_2010_2020.items()}).dropna()
+    datos_2010_2020 = cargar_datos_con_tipo_cambio(list(tickers.keys()), "2010-01-01", "2020-01-01")
+    retornos_2010_2020 = pd.DataFrame({k: v["Retornos MXN"] for k, v in datos_2010_2020.items()}).dropna()
 
     # 1. Portafolio de Mínima Volatilidad
     st.subheader("Portafolio de Mínima Volatilidad")
