@@ -336,6 +336,63 @@ def calcular_rendimiento_volatilidad(pesos, retornos):
         volatilidad = np.sqrt(np.dot(pesos.T, np.dot(retornos.cov(), pesos)))  # Volatilidad (riesgo)
         return rendimiento, volatilidad
 
+# Calcular el rendimiento y volatilidad para una serie de portafolios aleatorios
+def frontera_eficiente(retornos, num_portafolios=10000):
+    # Número de activos
+    n = len(retornos.columns)
+    
+    # Almacenar los rendimientos, volatilidades y pesos de los portafolios
+    rendimientos = []
+    volatilidades = []
+    pesos = []
+    
+    # Generamos 'num_portafolios' portafolios aleatorios
+    for _ in range(num_portafolios):
+        # Pesos aleatorios
+        w = np.random.random(n)
+        w /= np.sum(w)  # Asegurarse que los pesos sumen 1
+        
+        # Rendimiento esperado del portafolio
+        rendimiento = np.dot(w, retornos.mean())
+        
+        # Volatilidad del portafolio
+        volatilidad = np.sqrt(np.dot(w.T, np.dot(retornos.cov(), w)))
+        
+        # Almacenar los resultados
+        rendimientos.append(rendimiento)
+        volatilidades.append(volatilidad)
+        pesos.append(w)
+    
+    # Convertir a arrays para facilitar el uso
+    rendimientos = np.array(rendimientos)
+    volatilidades = np.array(volatilidades)
+    return rendimientos, volatilidades, pesos
+
+# Función para graficar la frontera eficiente
+def graficar_frontera_eficiente(rendimientos, volatilidades, pesos, portafolios_optimos):
+    fig = go.Figure()
+
+    # Agregar la frontera eficiente
+    fig.add_trace(go.Scatter(x=volatilidades, y=rendimientos, mode='markers', 
+                             marker=dict(color='blue', size=4, opacity=0.5), name="Frontera Eficiente"))
+
+    # Marcar los portafolios optimizados
+    for nombre, portafolio in portafolios_optimos.items():
+        rendimiento, volatilidad = calcular_rendimiento_volatilidad(portafolio, retornos)
+        fig.add_trace(go.Scatter(x=[volatilidad], y=[rendimiento], mode='markers', 
+                                 marker=dict(color='red', size=12, symbol='x'), name=nombre))
+    
+    # Configuración de la gráfica
+    fig.update_layout(
+        title="Frontera Eficiente con Portafolios Óptimos",
+        xaxis_title="Volatilidad (Riesgo)",
+        yaxis_title="Rendimiento Esperado",
+        showlegend=True
+    )
+    
+    return fig
+
+
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
 
@@ -484,6 +541,21 @@ with tabs[3]:
     fig_target = px.bar(x=tickers_list, y=pesos_target, labels={'x': 'Ticker', 'y': 'Peso'}, 
                         title="Pesos - Mínima Volatilidad con 10% Rendimiento Anual")
     st.plotly_chart(fig_target)
+
+    portafolios_optimos = {
+    "Mínima Volatilidad": pesos_min_vol,
+    "Máximo Sharpe Ratio": pesos_sharpe,
+    "Mínima Volatilidad (10% Rend.)": pesos_target
+    }
+
+    # Calcular la frontera eficiente
+    rendimientos, volatilidades, pesos = frontera_eficiente(retornos)
+
+    # Graficar la frontera eficiente
+    fig_frontera = graficar_frontera_eficiente(rendimientos, volatilidades, pesos, portafolios_optimos)
+
+    # Mostrar en Streamlit
+    st.plotly_chart(fig_frontera)
     
 # --- Backtesting ---
 with tabs[4]:
