@@ -452,14 +452,13 @@ with tabs[3]:
     rendimiento_sharpe, volatilidad_sharpe = calcular_rendimiento_volatilidad(pesos_sharpe, retornos)
     rendimiento_target, volatilidad_target = calcular_rendimiento_volatilidad(pesos_target, retornos)
 
-
     # Lista de tickers
     tickers_list = list(tickers.keys())
 
     # Pesos para Mínima Volatilidad
     st.subheader("Portafolio de Mínima Volatilidad")
-    st.write(f"**Rendimiento:** {rendimiento_min_vol:.2%}")
-    st.write(f"**Volatilidad:** {volatilidad_min_vol:.2%}")
+    st.write(f"**Rendimiento diario:** {rendimiento_min_vol:.4%} | **Rendimiento anualizado:** {(1 + rendimiento_min_vol) ** 252 - 1:.4%}")
+    st.write(f"**Volatilidad diaria:** {volatilidad_min_vol:.4%}| **Volatilidad anualizada:** {volatilidad_min_vol * sqrt(252):.4%}")
     for ticker, peso in zip(tickers_list, pesos_min_vol):
         st.write(f"{ticker}: {peso:.2%}")
     fig_min_vol = px.bar(x=tickers_list, y=pesos_min_vol, labels={'x': 'Ticker', 'y': 'Peso'}, 
@@ -468,8 +467,8 @@ with tabs[3]:
 
         # Pesos para Máximo Sharpe Ratio
     st.subheader("Portafolio de Máximo Sharpe Ratio")
-    st.write(f"**Rendimiento:** {rendimiento_sharpe:.2%}")
-    st.write(f"**Volatilidad:** {volatilidad_sharpe:.2%}")
+    st.write(f"**Rendimiento diario:** {rendimiento_sharpe:.4%} | **Rendimiento anualizado:** {(1 + rendimiento_sharpe) ** 252 - 1:.4%}")
+    st.write(f"**Volatilidad diaria:** {volatilidad_sharpe:.4%}| **Volatilidad anualizada:** {volatilidad_sharpe * sqrt(252):.4%}")
     for ticker, peso in zip(tickers_list, pesos_sharpe):
         st.write(f"{ticker}: {peso:.2%}")
     fig_sharpe = px.bar(x=tickers_list, y=pesos_sharpe, labels={'x': 'Ticker', 'y': 'Peso'}, 
@@ -478,8 +477,8 @@ with tabs[3]:
 
     # Pesos para Mínima Volatilidad con Rendimiento Objetivo
     st.subheader("Portafolio de Mínima Volatilidad con 10% Rendimiento Anual")
-    st.write(f"**Rendimiento:** {rendimiento_target:.2%}")
-    st.write(f"**Volatilidad:** {volatilidad_rtarget:.2%}")
+    st.write(f"**Rendimiento diario:** {rendimiento_target:.4%} | **Rendimiento anualizado:** {(1 + rendimiento_target) ** 252 - 1:.4%}")
+    st.write(f"**Volatilidad diaria:** {volatilidad_target:.4%}| **Volatilidad anualizada:** {volatilidad_target * sqrt(252):.4%}")
     for ticker, peso in zip(tickers_list, pesos_target):
         st.write(f"{ticker}: {peso:.2%}")
     fig_target = px.bar(x=tickers_list, y=pesos_target, labels={'x': 'Ticker', 'y': 'Peso'}, 
