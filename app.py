@@ -364,7 +364,7 @@ def frontera_eficiente(retornos, num_portafolios=10000):
         pesos.append(w)
     
     # Convertir a arrays para facilitar el uso
-    rendimientos = np.array(rendimientos)*100
+    rendimientos = np.array(rendimientos)
     volatilidades = np.array(volatilidades)
     return rendimientos, volatilidades, pesos
 
@@ -379,7 +379,7 @@ def graficar_frontera_eficiente(rendimientos, volatilidades, pesos, portafolios_
     # Marcar los portafolios optimizados
     for nombre, portafolio in portafolios_optimos.items():
         rendimiento, volatilidad = calcular_rendimiento_volatilidad(portafolio, retornos)
-        fig.add_trace(go.Scatter(x=[volatilidad], y=[rendimiento], mode='markers', 
+        fig.add_trace(go.Scatter(x=[volatilidad], y=[rendimiento]*100, mode='markers', 
                                  marker=dict(color='red', size=12, symbol='x'), name=nombre))
     
     # Configuración de la gráfica
