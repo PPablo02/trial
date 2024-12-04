@@ -330,6 +330,12 @@ def cargar_datos_y_retornos(tickers, inicio, fin):
     df_retornos = pd.DataFrame(datos).dropna()
     return df_retornos
 
+# Función para calcular rendimiento y volatilidad
+def calcular_rendimiento_volatilidad(pesos, retornos):
+        rendimiento = np.dot(pesos, retornos.mean())  # Rendimiento promedio ponderado
+        volatilidad = np.sqrt(np.dot(pesos.T, np.dot(retornos.cov(), pesos)))  # Volatilidad (riesgo)
+        return rendimiento, volatilidad
+
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
 
@@ -441,14 +447,19 @@ with tabs[3]:
     pesos_sharpe = optimizar_portafolio_markowitz(retornos, metodo="sharpe")
     pesos_target = optimizar_portafolio_markowitz(retornos, metodo="target", objetivo=0.00039)  # 10% anual ≈ 0.00039 diario
 
+    # Calcular rendimiento y volatilidad para cada portafolio
+    rendimiento_min_vol, volatilidad_min_vol = calcular_rendimiento_volatilidad(pesos_min_vol, retornos)
+    rendimiento_sharpe, volatilidad_sharpe = calcular_rendimiento_volatilidad(pesos_sharpe, retornos)
+    rendimiento_target, volatilidad_target = calcular_rendimiento_volatilidad(pesos_target, retornos)
+
+
     # Lista de tickers
     tickers_list = list(tickers.keys())
 
-        # Mostrar los pesos por ticker
-    st.title("Optimización de Portafolios - Markowitz")
-
-        # Pesos para Mínima Volatilidad
+    # Pesos para Mínima Volatilidad
     st.subheader("Portafolio de Mínima Volatilidad")
+    st.write(f"**Rendimiento:** {rendimiento_min_vol:.2%}")
+    st.write(f"**Volatilidad:** {volatilidad_min_vol:.2%}")
     for ticker, peso in zip(tickers_list, pesos_min_vol):
         st.write(f"{ticker}: {peso:.2%}")
     fig_min_vol = px.bar(x=tickers_list, y=pesos_min_vol, labels={'x': 'Ticker', 'y': 'Peso'}, 
@@ -457,6 +468,8 @@ with tabs[3]:
 
         # Pesos para Máximo Sharpe Ratio
     st.subheader("Portafolio de Máximo Sharpe Ratio")
+    st.write(f"**Rendimiento:** {rendimiento_sharpe:.2%}")
+    st.write(f"**Volatilidad:** {volatilidad_sharpe:.2%}")
     for ticker, peso in zip(tickers_list, pesos_sharpe):
         st.write(f"{ticker}: {peso:.2%}")
     fig_sharpe = px.bar(x=tickers_list, y=pesos_sharpe, labels={'x': 'Ticker', 'y': 'Peso'}, 
@@ -465,6 +478,8 @@ with tabs[3]:
 
     # Pesos para Mínima Volatilidad con Rendimiento Objetivo
     st.subheader("Portafolio de Mínima Volatilidad con 10% Rendimiento Anual")
+    st.write(f"**Rendimiento:** {rendimiento_target:.2%}")
+    st.write(f"**Volatilidad:** {volatilidad_rtarget:.2%}")
     for ticker, peso in zip(tickers_list, pesos_target):
         st.write(f"{ticker}: {peso:.2%}")
     fig_target = px.bar(x=tickers_list, y=pesos_target, labels={'x': 'Ticker', 'y': 'Peso'}, 
