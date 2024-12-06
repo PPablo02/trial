@@ -446,7 +446,7 @@ def evaluar_portafolios(retornos_eval, pesos_min_vol, pesos_sharpe, pesos_target
     portafolios["S&P500"] = sp500_data["Close"].pct_change().dropna().values
 
     # Convertir portafolios a DataFrame para análisis
-    df_portafolios = pd.DataFrame(portafolios, index=retornos_eval.index)
+    df_portafolios = pd.DataFrame(portafolios)
     
     return df_portafolios
 
