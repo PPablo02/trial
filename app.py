@@ -419,6 +419,36 @@ def black_litterman_optimizar(retornos, P, Q, tau=0.05, metodo="min_vol"):
     # Optimización de Markowitz usando la media ajustada
     return optimizar_portafolio_markowitz(retornos, metodo=metodo)
 
+def evaluar_portafolios(retornos_eval, pesos_min_vol, pesos_sharpe, pesos_target, tickers):
+    """
+    Evalúa los portafolios óptimos y comparativos con datos de retornos en el período dado.
+
+    :param retornos_eval: DataFrame con retornos históricos de los ETFs.
+    :param pesos_min_vol: Pesos del portafolio de mínima volatilidad.
+    :param pesos_sharpe: Pesos del portafolio de máximo Sharpe Ratio.
+    :param pesos_target: Pesos del portafolio de rendimiento objetivo.
+    :param tickers: Lista de tickers de los ETFs.
+    :return: Diccionario con retornos de cada portafolio y métricas clave.
+    """
+    # Calcular retornos de los portafolios óptimos
+    portafolios = {
+        "Portafolio Mínima Volatilidad": np.dot(retornos_eval.values, pesos_min_vol),
+        "Portafolio Máximo Sharpe Ratio": np.dot(retornos_eval.values, pesos_sharpe),
+        "Portafolio 10% Rendimiento Objetivo": np.dot(retornos_eval.values, pesos_target),
+    }
+    
+    # Calcular retornos del portafolio equitativo
+    pesos_equitativos = np.ones(len(tickers)) / len(tickers)
+    portafolios["Portafolio Equitativo"] = np.dot(retornos_eval.values, pesos_equitativos)
+    
+    # Descargar y calcular retornos del S&P500
+    sp500_data = yf.download("^GSPC", start="2021-01-01", end="2023-12-31")
+    portafolios["S&P500"] = sp500_data["Close"].pct_change().dropna().values
+
+    # Convertir portafolios a DataFrame para análisis
+    df_portafolios = pd.DataFrame(portafolios, index=retornos_eval.index)
+    
+    return df_portafolios
 
 # --- Configuración de Streamlit ---
 st.title("Proyecto de Optimización de Portafolios")
@@ -594,31 +624,25 @@ with tabs[4]:
     pesos_sharpe_b = optimizar_portafolio_markowitz(retornos_eval, metodo="sharpe")
     pesos_target_b = optimizar_portafolio_markowitz(retornos_eval, metodo="target", objetivo=0.00039)
 
-    # Pesos del portafolio equitativo
-    pesos_equitativos = np.ones(len(tickers)) / len(tickers)
-
-    # Calcular retornos de los portafolios óptimos y comparativos
-    portafolios = {
-        "Portafolio Mínima Volatilidad": np.dot(retornos_eval, pesos_min_vol_b),
-        "Portafolio Máximo Sharpe Ratio": np.dot(retornos_eval, pesos_sharpe_b),
-        "Portafolio 10% Rendimiento Objetivo": np.dot(retornos_eval, pesos_target_b),
-        "Portafolio Equitativo": np.dot(retornos_eval, pesos_equitativos),
-        "S&P500": yf.download("^GSPC", start="2021-01-01", end="2023-12-31")["Close"].pct_change().dropna(),
-    }
-
-    # Crear DataFrames con retornos para aplicar `calcular_metricas`
-    df_portafolios = {
-    nombre: pd.DataFrame({"Retornos": pd.Series(retornos)}) for nombre, retornos in portafolios.items()}
-
-    # Calcular métricas para cada portafolio
-    metricas_portafolios = {nombre: calcular_metricas(df) for nombre, df in df_portafolios.items()}
-
-    # Mostrar métricas en Streamlit
-    st.subheader("Métricas de los Portafolios")
-    for nombre, metricas in metricas_portafolios.items():
-        st.markdown(f"### {nombre}")
-        for metrica, valor in metricas.items():
-            st.write(f"**{metrica}:** {valor:.2f}" if isinstance(valor, (float, int)) else f"**{metrica}:** {valor}")
+    
+    # Evaluar portafolios
+    df_resultados = evaluar_portafolios(
+        retornos_eval,
+        pesos_min_vol_b,
+        pesos_sharpe_b,
+        pesos_target_b,
+        tickers
+    )
+    
+    # Mostrar métricas de los portafolios
+    st.write("Retornos y métricas de los portafolios evaluados:")
+    st.dataframe(df_resultados)
+    
+    # (Opcional) Calcular métricas adicionales por portafolio
+    for nombre, retornos in df_resultados.iteritems():
+        st.subheader(f"Métricas del {nombre}")
+        metrics = calcular_metricas(pd.DataFrame({"Retornos": retornos}))
+        st.write(metrics)
 
     # Graficar rendimientos acumulados
     st.subheader("Rendimientos Acumulados (2021-2023)")
