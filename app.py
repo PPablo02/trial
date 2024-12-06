@@ -607,7 +607,8 @@ with tabs[4]:
     }
 
     # Crear DataFrames con retornos para aplicar `calcular_metricas`
-    df_portafolios = {nombre: pd.DataFrame({"Retornos": retornos}) for nombre, retornos in portafolios.items()}
+    df_portafolios = {
+    nombre: pd.DataFrame({"Retornos": pd.Series(retornos)}) for nombre, retornos in portafolios.items()}
 
     # Calcular métricas para cada portafolio
     metricas_portafolios = {nombre: calcular_metricas(df) for nombre, df in df_portafolios.items()}
